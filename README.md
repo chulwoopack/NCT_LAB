@@ -12,7 +12,7 @@ In order to run the scripts, it is necessary to install the following library on
 ## Usages
 First, download the `Prod` folder to your local machine. Then run one of the following commands depending on your interest.
 
-### *Task 1: N-back Analyzer*
+### :pushpin: *Task 1: N-back Analyzer*
 To run the N-back analyzer,  open your terminal and execute the following command:
 ```console
 user@local:~$ python <PATH/TO/analyze_Nback.py> -csv_main_path=<PATH/TO/XXX_Nback_XXX.csv> -csv_ref_path=<PATH/TO/nback_AB.csv>
@@ -29,7 +29,7 @@ user@local:~$ python ~/Downloads/Prod/Task1_N-Back/analyze_Nback.py -csv_main_pa
 | *\<SUBJECTID\>*_avg_rxntime_per_loadsize.csv | Average response time per loadsize |
 | *\<SUBJECTID\>*_avg_rxntime_per_stimulus.csv | Average response time per stimulus|
 
-### *Task 2: Face-matching Analyzer*
+### :pushpin: *Task 2: Face-matching Analyzer*
 Similar as above, open your terminal and execute the following command:
 ```console
 user@local:~$ python <PATH/TO/analyze_FaceMatching.py> -csv_main_path=<PATH/TO/XXX_FaceMatching_XXX.csv> -csv_ref_path=<PATH/TO/facematching_AB.csv>
@@ -42,7 +42,7 @@ user@local:~$ python <PATH/TO/analyze_FaceMatching.py> -csv_main_path=<PATH/TO/X
 | *\<SUBJECTID\>*_avg_rxntime_per_condition.csv | Average response time per condition |
 | *\<SUBJECTID\>*_avg_accuracy_per_condition.csv | Average accuracy per condition|
 
-### *Task 3: BELT Analyzer*
+### :pushpin: *Task 3: BELT Analyzer*
 Unlike the above two tasks, in order to run the script for the BELT task, a `.log` file corresponding to the main CSV file is required as following:
 ```console
 user@local:~$ python <PATH/TO/analyze_BELT.py> -csv_path=<PATH/TO/XXX_BELT_XXX.csv> -log_path=<PATH/TO/XXX_BELT_XXX.log>
