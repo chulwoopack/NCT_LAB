@@ -43,6 +43,16 @@ class BELT_Analyzer:
         diff = timelist[1:] - timelist[:-1]
         return diff
     
+    '''
+    computeResTimeOnset:
+        Get an array containing a sequence of timestamp.
+        Return the first reaction time after a ballon is presented.
+        e.g.) input <- [1,4,12,13]
+              output <- 3 (i.e., 4-1)
+    '''
+    def computeResTimeOnset(self, timelist):
+        return timelist[1]-timelist[0]
+
     
     '''
     getBalloonPointsAndPops:
@@ -65,6 +75,7 @@ class BELT_Analyzer:
                   "orange_score": [orangeballoon_points],
                   "orange_pops" : [orangeballoon_pops]}
         return result
+
     
     '''
     readLog:
@@ -89,6 +100,17 @@ class BELT_Analyzer:
 
     '''
     def setResponseTimeOnMainFromLog(self, data_log):
+        # This list will contain the timestamp of the participant's action (for detailed analysis)
+        action_timestamp = []
+        
+        # This list will contain the average reaction time per presentation from onset stimulus
+        onset_avg_rxn_time = []
+        
+        # This list will contain the average reaction time from previous stimulus
+        prev_avg_rxn_time = []
+        _prev_stimulus_time = 0
+        _curr_rxn_time = 0
+         
         # This list will contain the average reaction(response) time of each trial (balloon)
         out_avg_rxn_time = []
         
@@ -101,17 +123,32 @@ class BELT_Analyzer:
                 if(len(_timestamp)==0):
                     pass
                 else:
+                    action_timestamp.append(_timestamp)
+                    onset_avg_rxn_time.append(self.computeResTimeOnset(np.array(_timestamp)))
                     _restime_arr = self.computeResTime(np.array(_timestamp))
                     #print("Score: {} Avg_rxn_time: {}".format(len(_restime_arr), np.mean(_restime_arr)))
                     out_avg_rxn_time.append(np.mean(_restime_arr))
+                    
                     _timestamp = []
                 _timestamp.append(row['timestamp'])
             if row['msg'].startswith('Keypress: space'):
                 _timestamp.append(row['timestamp'])
+        action_timestamp.append(_timestamp)
+        onset_avg_rxn_time.append(self.computeResTimeOnset(np.array(_timestamp)))
         _restime_arr = self.computeResTime(np.array(_timestamp[:-1]))
         #print("Score: {} Avg_rxn_time: {}".format(len(_restime_arr), np.mean(_restime_arr)))
         out_avg_rxn_time.append(np.mean(_restime_arr))
 
+        prev_avg_rxn_time.append(action_timestamp[0][0])
+        prev_avg_rxn_time += self.computeResTime(np.array([i[0] for i in action_timestamp])).tolist()
+        
+        # All detailed timestamp (for logging purpose)
+        self.data_main['timestamps'] = action_timestamp
+        # Average reaction time per presentation from onset stimulus
+        self.data_main["avgOnsetRxnTime"] = onset_avg_rxn_time
+        # Average reaction time from previous stimulus
+        self.data_main["avgPrevRxnTime"]  = prev_avg_rxn_time
+        # Average reaction(response) time of each trial (balloon)
         self.data_main["avgRxnTime"] = out_avg_rxn_time
         
 '''
@@ -119,21 +156,26 @@ main driver
 '''
 my_BELT = BELT_Analyzer(CSV_PATH, LOG_PATH)
 
-# Task 1: points on balloons by color (condition)
+# Task 1: response time per presentation from onset stimulus
+# Task 2: response time from previous stimulus
+save_path = subject_id+"_rxntime_from_onset_from_previous.csv"
+my_BELT.data_main.to_csv(save_path)
+print("[INFO] Output is saved at {}".format(save_path))
+
+# Task 3: points on balloons by color (condition)
 save_path = subject_id+"_balloonscore_per_color.csv"
 pd.DataFrame(my_BELT.data_main.groupby('imgroot').mean().balloonscore).to_csv(save_path)
 print("[INFO] Output is saved at {}".format(save_path))
 
-# Task 2: number of points for each participant
+# Task 4: number of points for each participant
 save_path = subject_id+"_balloonscore_pop.csv"
 total_balloonscore = np.sum(my_BELT.data_main['balloonscore'].values)
-
-# Task 3: number of pops per participant*
+# Task 5: number of pops per participant*
 total_pops = len(np.argwhere(my_BELT.data_main['balloonscore'].values==0))
 pd.DataFrame({"total_balloonscore":[total_balloonscore],"total_pops":[total_pops]}).to_csv(save_path,index=False)
 print("[INFO] Output is saved at {}".format(save_path))
 
-# Task 4: number of pops and number of points per color condition overall*
+# Task 6: number of pops and number of points per color condition overall*
 ## first half
 save_path = subject_id+"_balloonscore_pop_per_color_first_half.csv"
 data_main_first_half = my_BELT.data_main[my_BELT.data_main['trials.thisRepN']==0]
@@ -145,7 +187,7 @@ data_main_second_half = my_BELT.data_main[my_BELT.data_main['trials.thisRepN']==
 pd.DataFrame(my_BELT.getBalloonPointsAndPops(data_main_second_half)).to_csv(save_path,index=False)
 print("[INFO] Output is saved at {}".format(save_path))
 
-# Task 5: average reaction time after popped balloons*
+# Task 7: average reaction time after popped balloons*
 save_path = subject_id+"_avg_rxntime_after_popped.csv"
 popped_balloons_trial_idx = np.argwhere(my_BELT.data_main['balloonscore'].values==0).squeeze()
 if(len(popped_balloons_trial_idx)<1):
@@ -160,12 +202,12 @@ else:
 pd.DataFrame({"avg_rxntime_after_popped":[avg_rxntime_after_popped]}).to_csv(save_path,index=False)
 print("[INFO] Output is saved at {}".format(save_path))
 
-# Task 6: average reaction time by color
+# Task 8: average reaction time by color
 save_path = subject_id+"_avg_rxntime_by_color.csv"
-pd.DataFrame(my_BELT.data_main.groupby('imgroot').mean().avgRxnTime).to_csv(save_path,index=False)
+pd.DataFrame(my_BELT.data_main.groupby('imgroot').mean().avgRxnTime).to_csv(save_path)
 print("[INFO] Output is saved at {}".format(save_path))
 
-# Task 7: split blue balloons into load sizes (there are three) with average reaction time for each
+# Task 9: split blue balloons into load sizes (there are three) with average reaction time for each
 save_path = subject_id+"_avg_rxntime_by_loadsize.csv"
 pd.DataFrame(my_BELT.data_main[my_BELT.data_main['imgroot']=='blueballoon'].groupby('maxpumps').mean().avgRxnTime).to_csv(save_path)
 print("[INFO] Output is saved at {}".format(save_path))
