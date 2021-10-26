@@ -21,7 +21,7 @@ For instance, if you downloaded the `Prod` folder to your local machine, say, un
 ```console
 user@local:~$ python ~/Downloads/Prod/Task1_N-Back/analyze_Nback.py -csv_main_path=~/Desktop/data/AA06LC00_Nback_2021_Jun_09_1034.csv -csv_ref_path=~/Desktop/data/nback_AB.csv
 ```
-> **Note 1.** The path of csv_ref_path should be the same for running the other main CSV files.
+> **Note 1.** The path of csv_ref_path should be the same for running the other main CSV files.\
 > **Note 2.** The script will generate two CSV files:
 
 | Filename | Contents |
