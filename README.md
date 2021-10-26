@@ -34,7 +34,7 @@ Similar as above, open your terminal and execute the following command:
 ```console
 user@local:~$ python <PATH/TO/analyze_FaceMatching.py> -csv_main_path=<PATH/TO/XXX_FaceMatching_XXX.csv> -csv_ref_path=<PATH/TO/facematching_AB.csv>
 ```
-> **Note 1.** The path of csv_ref_path should be the same for running the other main CSV files.
+> **Note 1.** The path of csv_ref_path should be the same for running the other main CSV files.\
 > **Note 2.** The script will generate two CSV files:
 
 | Filename | Contents |
@@ -51,7 +51,7 @@ For instance, if you downloaded the `Prod` folder to your local machine, say, un
 ```console
 user@local:~$ python ~/Downloads/Prod/Task3_BELT/analyze_BELT.py -csv_path=~/Desktop/data/AA06LC00_BELT_TEST_2021_Jun_09_1320.csv -log_path=~/Desktop/data/AA06LC00_BELT_TEST_2021_Jun_09_1320.log
 ```
-> **Note 1.** The path of log_path ***MUST be changed*** accordingly for running the each main CSV file.
+> **Note 1.** The path of log_path ***MUST be changed*** accordingly for running the each main CSV file.\
 > **Note 2.** The script will generate the following CSV files:
 
 | Filename | Contents |
