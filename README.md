@@ -14,12 +14,12 @@ First, download the `Prod` folder to your local machine. Then run one of the fol
 
 ### *Task 1: N-back Analyzer*
 To run the N-back analyzer,  open your terminal and execute the following command:
-```shell
-python <PATH/TO/analyze_Nback.py> -csv_main_path=<PATH/TO/XXX_Nback_XXX.csv> -csv_ref_path=<PATH/TO/nback_AB.csv>
+```console
+user@local:~$ python <PATH/TO/analyze_Nback.py> -csv_main_path=<PATH/TO/XXX_Nback_XXX.csv> -csv_ref_path=<PATH/TO/nback_AB.csv>
 ```
 For instance, if you downloaded the `Prod` folder to your local machine, say, under `~/Downloads`, and your main CSV (e.g., `AA06LC00_Nback_2021_Jun_09_1034.csv`) and `nback_AB.csv` is located at `~/Desktop/data`, the command should look like the following:
-```shell
-python ~/Downloads/Prod/Task1_N-Back/analyze_Nback.py -csv_main_path=~/Desktop/data/AA06LC00_Nback_2021_Jun_09_1034.csv -csv_ref_path=~/Desktop/data/nback_AB.csv
+```console
+user@local:~$ python ~/Downloads/Prod/Task1_N-Back/analyze_Nback.py -csv_main_path=~/Desktop/data/AA06LC00_Nback_2021_Jun_09_1034.csv -csv_ref_path=~/Desktop/data/nback_AB.csv
 ```
 > **Note 1.** The path of csv_ref_path should be the same for running the other main CSV files.
 > **Note 2.** The script will generate two CSV files:
@@ -31,8 +31,8 @@ python ~/Downloads/Prod/Task1_N-Back/analyze_Nback.py -csv_main_path=~/Desktop/d
 
 ### *Task 2: Face-matching Analyzer*
 Similar as above, open your terminal and execute the following command:
-```shell
-python <PATH/TO/analyze_FaceMatching.py> -csv_main_path=<PATH/TO/XXX_FaceMatching_XXX.csv> -csv_ref_path=<PATH/TO/facematching_AB.csv>
+```console
+user@local:~$ python <PATH/TO/analyze_FaceMatching.py> -csv_main_path=<PATH/TO/XXX_FaceMatching_XXX.csv> -csv_ref_path=<PATH/TO/facematching_AB.csv>
 ```
 > **Note 1.** The path of csv_ref_path should be the same for running the other main CSV files.
 > **Note 2.** The script will generate two CSV files:
@@ -44,12 +44,12 @@ python <PATH/TO/analyze_FaceMatching.py> -csv_main_path=<PATH/TO/XXX_FaceMatchin
 
 ### *Task 3: BELT Analyzer*
 Unlike the above two tasks, in order to run the script for the BELT task, a `.log` file corresponding to the main CSV file is required as following:
-```shell
-python <PATH/TO/analyze_BELT.py> -csv_path=<PATH/TO/XXX_BELT_XXX.csv> -log_path=<PATH/TO/XXX_BELT_XXX.log>
+```console
+user@local:~$ python <PATH/TO/analyze_BELT.py> -csv_path=<PATH/TO/XXX_BELT_XXX.csv> -log_path=<PATH/TO/XXX_BELT_XXX.log>
 ```
 For instance, if you downloaded the `Prod` folder to your local machine, say, under `~/Downloads`, and your main CSV (e.g., `AA06LC00_BELT_TEST_2021_Jun_09_1320.csv`) and the corresponding log file (e.g., `AA06LC00_BELT_TEST_2021_Jun_09_1320.log` are located at `~/Desktop/data`, the command should look like the following:
-```shell
-python ~/Downloads/Prod/Task3_BELT/analyze_BELT.py -csv_path=~/Desktop/data/AA06LC00_BELT_TEST_2021_Jun_09_1320.csv -log_path=~/Desktop/data/AA06LC00_BELT_TEST_2021_Jun_09_1320.log
+```console
+user@local:~$ python ~/Downloads/Prod/Task3_BELT/analyze_BELT.py -csv_path=~/Desktop/data/AA06LC00_BELT_TEST_2021_Jun_09_1320.csv -log_path=~/Desktop/data/AA06LC00_BELT_TEST_2021_Jun_09_1320.log
 ```
 > **Note 1.** The path of log_path ***MUST be changed*** accordingly for running the each main CSV file.
 > **Note 2.** The script will generate the following CSV files:
