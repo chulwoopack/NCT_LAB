@@ -54,6 +54,6 @@ pd.DataFrame(data_merge.groupby('trial_type').mean().rxn_time).to_csv(save_path)
 print("[INFO] Output is saved at {}".format(save_path))
 # Goal 2: average response time per stimulus
 save_path = subject_id+"_avg_rxntime_per_stimulus.csv"
-pd.DataFrame(data_merge.mean().rxn_time).to_csv(save_path)
+pd.DataFrame.from_dict({"Avg_rxntime_per_stimulus":[data_merge.mean().rxn_time]}).to_csv(save_path, index=False)
 print("[INFO] Output is saved at {}".format(save_path))
 print("[INFO] Completed.")
