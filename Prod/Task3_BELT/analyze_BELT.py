@@ -30,7 +30,7 @@ class BELT_Analyzer:
         
         self.data_main     = pd.read_csv(self.main_csv_path)
         self.data_log      = self.readLog(self.log_path)
-        self.data_main_ext = self.setResponseTimeOnMainFromLog(self.data_log)
+        self.setResponseTimeOnMainFromLog(self.data_log)
     
     '''
     computeResTime:
@@ -40,8 +40,11 @@ class BELT_Analyzer:
               output <- [3,8,1]
     '''
     def computeResTime(self, timelist):
-        diff = timelist[1:] - timelist[:-1]
-        return diff
+        if(len(timelist)<2):
+            return [np.nan]
+        else:
+            diff = timelist[1:] - timelist[:-1]
+            return diff
     
     '''
     computeResTimeOnset:
@@ -51,7 +54,10 @@ class BELT_Analyzer:
               output <- 3 (i.e., 4-1)
     '''
     def computeResTimeOnset(self, timelist):
-        return timelist[1]-timelist[0]
+        if(len(timelist)<2):
+            return np.nan
+        else:
+            return timelist[1]-timelist[0]
 
     
     '''
@@ -87,13 +93,17 @@ class BELT_Analyzer:
             type_list = []
             mesg_list = []
             for line in f:
-                columns = line.split("\t")
-                time_list.append(float(columns[0].rstrip()))
-                type_list.append(columns[1].rstrip())
-                mesg_list.append(columns[2].rstrip())
+                try:
+                    columns = line.split("\t")
+                    time_list.append(float(columns[0].rstrip()))
+                    type_list.append(columns[1].rstrip())
+                    mesg_list.append(columns[2].rstrip())
+                except ValueError:
+                    continue
         data_json = {'timestamp':time_list, 'datatype':type_list, 'msg':mesg_list}
         data_log = pd.DataFrame(data_json)
         return data_log
+        
     
     '''
     setResponseTimeFromLog:
@@ -102,25 +112,30 @@ class BELT_Analyzer:
     def setResponseTimeOnMainFromLog(self, data_log):
         # This list will contain the timestamp of the participant's action (for detailed analysis)
         action_timestamp = []
-        
+
         # This list will contain the average reaction time per presentation from onset stimulus
         onset_avg_rxn_time = []
-        
+
         # This list will contain the average reaction time from previous stimulus
         prev_avg_rxn_time = []
         _prev_stimulus_time = 0
         _curr_rxn_time = 0
-         
+
         # This list will contain the average reaction(response) time of each trial (balloon)
         out_avg_rxn_time = []
-        
+
         _timestamp = []
+
+        # A flag to filter and skip unexpected "Keypress: space" before the very first "New trial"
+        _flag_first_new_trial = True
+
         # Iterate log data, for each new trial, collect timestamp when a participant hit a button.
         for index, row in data_log.iterrows():
             # New balloon is shown. Empty timestamp buffer.
             if row['msg'].startswith('New trial'):
                 # Corner case: Very first trial of experiment.
                 if(len(_timestamp)==0):
+                    _flag_first_new_trial = False
                     pass
                 else:
                     action_timestamp.append(_timestamp)
@@ -131,7 +146,7 @@ class BELT_Analyzer:
                     
                     _timestamp = []
                 _timestamp.append(row['timestamp'])
-            if row['msg'].startswith('Keypress: space'):
+            if _flag_first_new_trial==False and row['msg'].startswith('Keypress: space'):
                 _timestamp.append(row['timestamp'])
         action_timestamp.append(_timestamp)
         onset_avg_rxn_time.append(self.computeResTimeOnset(np.array(_timestamp)))
@@ -150,6 +165,8 @@ class BELT_Analyzer:
         self.data_main["avgPrevRxnTime"]  = prev_avg_rxn_time
         # Average reaction(response) time of each trial (balloon)
         self.data_main["avgRxnTime"] = out_avg_rxn_time
+  
+
         
 '''
 main driver
@@ -195,10 +212,10 @@ if(len(popped_balloons_trial_idx)<1):
 else:
     popped_balloons_trial_idx += 1 # increase index to target the AFTER popped
     # The last balloon is popped. In this case, there is no more following trial to compute, thus we ignore the last pop.
-    if(popped_balloons_trial_idx[-1]==len(my_BELT.data_main)-1):
-        print("[WARN] A balloon is poppped at the last trial. Thus, unable to compute avg reaction time AFTER popped balloon.")
+    if(popped_balloons_trial_idx[-1]==len(my_BELT.data_main)):
+        print("[WARN] A balloon is poppped at the last trial. Thus, the corresponding reaction time is not reflected to the calculation.")
         popped_balloons_trial_idx = popped_balloons_trial_idx[:-1]
-    avg_rxntime_after_popped = np.mean(my_BELT.data_main.iloc[np.argwhere(my_BELT.data_main['balloonscore'].values==0).squeeze() + 1].avgRxnTime)
+    avg_rxntime_after_popped = np.mean(my_BELT.data_main.iloc[popped_balloons_trial_idx]).avgRxnTime
 pd.DataFrame({"avg_rxntime_after_popped":[avg_rxntime_after_popped]}).to_csv(save_path,index=False)
 print("[INFO] Output is saved at {}".format(save_path))
 
