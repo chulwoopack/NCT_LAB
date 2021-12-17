@@ -58,6 +58,19 @@ class BELT_Analyzer:
             return np.nan
         else:
             return timelist[1]-timelist[0]
+        
+    '''
+    computeTrialDuration:
+        Get an array containing a sequence of timestamp.
+        Return the duration of timestamp.
+        e.g.) input <- [1,4,12,13]
+              output <- 12 (i.e., 13-1)
+    '''
+    def computeTrialDuration(self, timelist):
+        if(len(timelist)<2):
+            return 0.0
+        else:
+            return timelist[-1]-timelist[0]
 
     
     '''
@@ -103,7 +116,6 @@ class BELT_Analyzer:
         data_json = {'timestamp':time_list, 'datatype':type_list, 'msg':mesg_list}
         data_log = pd.DataFrame(data_json)
         return data_log
-        
     
     '''
     setResponseTimeFromLog:
@@ -112,27 +124,38 @@ class BELT_Analyzer:
     def setResponseTimeOnMainFromLog(self, data_log):
         # This list will contain the timestamp of the participant's action (for detailed analysis)
         action_timestamp = []
-
+        
         # This list will contain the average reaction time per presentation from onset stimulus
         onset_avg_rxn_time = []
-
+        
         # This list will contain the average reaction time from previous stimulus
         prev_avg_rxn_time = []
         _prev_stimulus_time = 0
         _curr_rxn_time = 0
-
+         
         # This list will contain the average reaction(response) time of each trial (balloon)
         out_avg_rxn_time = []
-
+        
         _timestamp = []
-
+        
+        # This list will contain the average reaction(response) time of each trial (balloon)
+        out_avg_rxn_time = []
+        
+        # This list will contain the trial duration
+        trial_duration = []
+        
         # A flag to filter and skip unexpected "Keypress: space" before the very first "New trial"
         _flag_first_new_trial = True
-
+        
+        # A flag for indicating the end of trial (based on "popped" or "score")
+        trial_end_keywords = ['Popped', 'Score']
+        _flag_trialend = False
+        
         # Iterate log data, for each new trial, collect timestamp when a participant hit a button.
         for index, row in data_log.iterrows():
             # New balloon is shown. Empty timestamp buffer.
             if row['msg'].startswith('New trial'):
+                _flag_trialend = False
                 # Corner case: Very first trial of experiment.
                 if(len(_timestamp)==0):
                     _flag_first_new_trial = False
@@ -146,16 +169,33 @@ class BELT_Analyzer:
                     
                     _timestamp = []
                 _timestamp.append(row['timestamp'])
-            if _flag_first_new_trial==False and row['msg'].startswith('Keypress: space'):
-                _timestamp.append(row['timestamp'])
+            if _flag_first_new_trial==False:
+                if(any(keyword in row['msg'] for keyword in trial_end_keywords)):
+                    _flag_trialend = True
+                elif(_flag_trialend==False and row['msg'].startswith('Keypress: space')):
+                    _timestamp.append(row['timestamp'])
+                elif(_flag_trialend==False and row['msg'].startswith('Keypress: return')):
+                    _timestamp.append(row['timestamp'])
+                else:
+                    continue
+            
+                
         action_timestamp.append(_timestamp)
+                
         onset_avg_rxn_time.append(self.computeResTimeOnset(np.array(_timestamp)))
         _restime_arr = self.computeResTime(np.array(_timestamp[:-1]))
         #print("Score: {} Avg_rxn_time: {}".format(len(_restime_arr), np.mean(_restime_arr)))
         out_avg_rxn_time.append(np.mean(_restime_arr))
 
-        prev_avg_rxn_time.append(action_timestamp[0][0])
+        # corner-case: last timestamp of the first trial - first timestamp of the first trial
+        prev_avg_rxn_time_first_trial = self.computeTrialDuration(action_timestamp[0])
+        prev_avg_rxn_time.append(prev_avg_rxn_time_first_trial)  
         prev_avg_rxn_time += self.computeResTime(np.array([i[0] for i in action_timestamp])).tolist()
+        
+        # compute trial duration (note: if there is only one timestamp for a trial, put 0.0)
+        for i in action_timestamp:
+            _trialDuration = self.computeTrialDuration(np.array(i))
+            trial_duration.append(_trialDuration)
         
         # All detailed timestamp (for logging purpose)
         self.data_main['timestamps'] = action_timestamp
@@ -165,8 +205,9 @@ class BELT_Analyzer:
         self.data_main["avgPrevRxnTime"]  = prev_avg_rxn_time
         # Average reaction(response) time of each trial (balloon)
         self.data_main["avgRxnTime"] = out_avg_rxn_time
+        # Trial duration
+        self.data_main["trialDuration"] = trial_duration
   
-
         
 '''
 main driver
@@ -179,33 +220,52 @@ save_path = subject_id+"_rxntime_from_onset_from_previous.csv"
 my_BELT.data_main.to_csv(save_path)
 print("[INFO] Output is saved at {}".format(save_path))
 
+##################################################
+# Stats from task 3 to task 9 will be aggregated #
+##################################################
+# This list will collect all computed data
+save_path = subject_id+"_aggregated_stats.csv"
+aggregate_data = []
+
 # Task 3: points on balloons by color (condition)
-save_path = subject_id+"_balloonscore_per_color.csv"
-pd.DataFrame(my_BELT.data_main.groupby('imgroot').mean().balloonscore).to_csv(save_path)
-print("[INFO] Output is saved at {}".format(save_path))
+prefix = "balloonscore_per_color"
+for key,value in my_BELT.data_main.groupby('imgroot').mean().balloonscore.to_dict().items():
+    _data = (prefix, key, value)
+    aggregate_data.append(_data)
 
 # Task 4: number of points for each participant
-save_path = subject_id+"_balloonscore_pop.csv"
 total_balloonscore = np.sum(my_BELT.data_main['balloonscore'].values)
+prefix = "balloonscore_pop"
+_data = (prefix, "total_balloonscore", total_balloonscore)
+aggregate_data.append(_data)
+
 # Task 5: number of pops per participant*
 total_pops = len(np.argwhere(my_BELT.data_main['balloonscore'].values==0))
-pd.DataFrame({"total_balloonscore":[total_balloonscore],"total_pops":[total_pops]}).to_csv(save_path,index=False)
-print("[INFO] Output is saved at {}".format(save_path))
+_data = (prefix, "total_pops", total_pops)
+aggregate_data.append(_data)
 
 # Task 6: number of pops and number of points per color condition overall*
-## first half
-save_path = subject_id+"_balloonscore_pop_per_color_first_half.csv"
-data_main_first_half = my_BELT.data_main[my_BELT.data_main['trials.thisRepN']==0]
-pd.DataFrame(my_BELT.getBalloonPointsAndPops(data_main_first_half)).to_csv(save_path,index=False)
-print("[INFO] Output is saved at {}".format(save_path))
-## second half
-save_path = subject_id+"_balloonscore_pop_per_color_second_half.csv"
-data_main_second_half = my_BELT.data_main[my_BELT.data_main['trials.thisRepN']==1]
-pd.DataFrame(my_BELT.getBalloonPointsAndPops(data_main_second_half)).to_csv(save_path,index=False)
-print("[INFO] Output is saved at {}".format(save_path))
-
+data_len = len(my_BELT.data_main)
+if(data_len!=54):
+    print("[WARN] The number of data entry is not divisibly by 3 ({}/3).".format(len(my_BELT.data_main)))
+else:
+    data_main_first_part  = my_BELT.data_main[:data_len//3]
+    data_main_second_part = my_BELT.data_main[data_len//3:data_len//3*2]
+    data_main_third_part  = my_BELT.data_main[data_len//3*2:]
+prefix = "balloonscore_pop_per_color_first_third"
+for key,value in my_BELT.getBalloonPointsAndPops(data_main_first_part).items():
+    _data = (prefix, key, value[0])
+    aggregate_data.append(_data)
+prefix = "balloonscore_pop_per_color_second_third"
+for key,value in my_BELT.getBalloonPointsAndPops(data_main_second_part).items():
+    _data = (prefix, key, value[0])
+    aggregate_data.append(_data)
+prefix = "balloonscore_pop_per_color_last_third"
+for key,value in my_BELT.getBalloonPointsAndPops(data_main_third_part).items():
+    _data = (prefix, key, value[0])
+    aggregate_data.append(_data)
+    
 # Task 7: average reaction time after popped balloons*
-save_path = subject_id+"_avg_rxntime_after_popped.csv"
 popped_balloons_trial_idx = np.argwhere(my_BELT.data_main['balloonscore'].values==0).squeeze()
 if(len(popped_balloons_trial_idx)<1):
     print("[WARN] No popped balloons")
@@ -216,17 +276,32 @@ else:
         print("[WARN] A balloon is poppped at the last trial. Thus, the corresponding reaction time is not reflected to the calculation.")
         popped_balloons_trial_idx = popped_balloons_trial_idx[:-1]
     avg_rxntime_after_popped = np.mean(my_BELT.data_main.iloc[popped_balloons_trial_idx]).avgRxnTime
-pd.DataFrame({"avg_rxntime_after_popped":[avg_rxntime_after_popped]}).to_csv(save_path,index=False)
-print("[INFO] Output is saved at {}".format(save_path))
+prefix = "avg_rxntime_after_popped"
+_data = (prefix, "avg_rxntime_after_popped", avg_rxntime_after_popped)
+aggregate_data.append(_data)
 
 # Task 8: average reaction time by color
-save_path = subject_id+"_avg_rxntime_by_color.csv"
-pd.DataFrame(my_BELT.data_main.groupby('imgroot').mean().avgRxnTime).to_csv(save_path)
-print("[INFO] Output is saved at {}".format(save_path))
+prefix = "avg_rxntime_by_color"
+for key,value in pd.DataFrame(my_BELT.data_main.groupby('imgroot').mean().avgRxnTime).to_dict()['avgRxnTime'].items():
+    _data = (prefix, key, value)
+    aggregate_data.append(_data)
 
 # Task 9: split blue balloons into load sizes (there are three) with average reaction time for each
-save_path = subject_id+"_avg_rxntime_by_loadsize.csv"
-pd.DataFrame(my_BELT.data_main[my_BELT.data_main['imgroot']=='blueballoon'].groupby('maxpumps').mean().avgRxnTime).to_csv(save_path)
+prefix = "avg_rxntime_by_loadsize"
+for key,value in pd.DataFrame(my_BELT.data_main[my_BELT.data_main['imgroot']=='blueballoon'].groupby('maxpumps').mean().avgRxnTime).to_dict()['avgRxnTime'].items():
+    _data = (prefix, key, value)
+    aggregate_data.append(_data)
+pd.DataFrame(aggregate_data, columns=['Task','Key','Value']).to_csv(save_path,index=False)
+print("[INFO] Output is saved at {}".format(save_path))
+
+# Task 10: post_explosion_behavior - Collect every popped case, and the right after the same condition.
+save_path = subject_id+"_post_explosion_behavior.csv"
+popped_index = np.array(my_BELT.data_main.index[my_BELT.data_main['balloonscore']==0])
+post_popped_index = popped_index+1
+if(post_popped_index[-1]>=data_len-1):
+    post_popped_index = post_popped_index[:-1]
+popped_post_popped_index = np.unique(np.sort(np.concatenate((popped_index,post_popped_index))))
+my_BELT.data_main.iloc[popped_post_popped_index].to_csv(save_path,index=False)
 print("[INFO] Output is saved at {}".format(save_path))
 
 print("[INFO] Completed.")
