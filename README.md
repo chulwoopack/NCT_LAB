@@ -57,12 +57,9 @@ user@local:~$ python ~/Downloads/Prod/Task3_BELT/analyze_BELT.py -csv_path=~/Des
 | Filename | Contents |
 |---|---|
 | *\<SUBJECTID\>*_rxntime_from_onset_from_previous.csv | - Response time per presentation from onset stimulus <br> - Response time from previous stimulus|
-| *\<SUBJECTID\>*_balloonscore_per_color.csv | Points on balloons by color (condition)|
-| *\<SUBJECTID\>*_balloonscore_pop.csv | - Number of points for each participant <br> - Number of pops per participant|
-| *\<SUBJECTID\>*_balloonscore_pop_per_color_first_half.csv <br> *\<SUBJECTID\>*_balloonscore_pop_per_color_second_half.csv| Number of pops and number of points per color condition|
-| *\<SUBJECTID\>*_avg_rxntime_after_popped.csv | Average reaction time after popped balloons|
-| *\<SUBJECTID\>*_avg_rxntime_by_color.csv | Average reaction time by color |
-| *\<SUBJECTID\>*_avg_rxntime_by_loadsize.csv | Average reaction time by load sizes |
+| *\<SUBJECTID\>*_aggregated_stats.csv | Aggregated stats, including balloonscore per color, total balloonscores, average reaction time after popped, etc.|
+| *\<SUBJECTID\>*_post_explosion_behavior.csv | Filtered results from _rxntime_from_onset_from_previous.csv to show every popped case and the right after of the same condition|
+
 
 ## Author
 - Chulwoo (Mike) Pack 
