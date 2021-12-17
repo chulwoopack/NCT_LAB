@@ -296,12 +296,22 @@ print("[INFO] Output is saved at {}".format(save_path))
 
 # Task 10: post_explosion_behavior - Collect every popped case, and the right after the same condition.
 save_path = subject_id+"_post_explosion_behavior.csv"
-popped_index = np.array(my_BELT.data_main.index[my_BELT.data_main['balloonscore']==0])
-post_popped_index = popped_index+1
-if(post_popped_index[-1]>=data_len-1):
-    post_popped_index = post_popped_index[:-1]
-popped_post_popped_index = np.unique(np.sort(np.concatenate((popped_index,post_popped_index))))
-my_BELT.data_main.iloc[popped_post_popped_index].to_csv(save_path,index=False)
+my_BELT.data_main['local_index'] = my_BELT.data_main.index
+df_post_explosion_behavior = my_BELT.data_main.sort_values(by=['imgroot','local_index']).reset_index(drop=True)
+post_explosion_behavior_data =[]
+for index, row in df_post_explosion_behavior.iterrows():
+    # 1. Find the exploded case
+    if row['balloonscore']==0:
+        post_explosion_behavior_data.append(tuple(row))
+        # 2.1 Ignore the exploded case at the last trial
+        if(index<data_len-1):
+            # 2.2 Ignore the explosion right after the explosion 
+            if(df_post_explosion_behavior.iloc[index+1]['balloonscore']==0):
+                continue
+            # 2.3. Make sure the post behavior is for the same condition
+            if(df_post_explosion_behavior.iloc[index]['imgroot']==df_post_explosion_behavior.iloc[index+1]['imgroot']):
+                post_explosion_behavior_data.append(tuple(df_post_explosion_behavior.iloc[index+1]))
+pd.DataFrame(post_explosion_behavior_data, columns=df_post_explosion_behavior.columns.to_list()).to_csv(save_path,index=False)
 print("[INFO] Output is saved at {}".format(save_path))
 
 print("[INFO] Completed.")
